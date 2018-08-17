@@ -20,7 +20,8 @@ required arguments:
                         The host you want to target.
 ```
 example 
-```$ ./openssh_bruteforce.py -host pwnable.kr -user fd -p 2222
+```
+$ ./openssh_bruteforce.py -host pwnable.kr -user fd -p 2222
 [+] User Exists!
 ```
 
