@@ -105,7 +105,7 @@ def bruteforce_users(host, port, users_wordlist, threads_num):
 	    while True:
 	        lines = list(islice(infile, threads_num))
 	        threads = []
-	        if lines is None:
+	        if not lines:
 	            break
 	        for line in lines:
 	            user = line.strip()
@@ -151,4 +151,5 @@ if __name__ == '__main__':
     else:
         bruteforce_args = (args.hostname, args.port,
                            args.wordlist, args.threads)
-        bruteforce_users(*bruteforce_args)
+        results = bruteforce_users(*bruteforce_args)
+        print 'Found Users: ', results
