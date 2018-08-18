@@ -28,8 +28,6 @@ $ ./openssh_bruteforce.py -host pwnable.kr -user fd -p 2222
 # Note
 You can find explanation of the technique used inside the script.
 
-### TODO
-Fix the multithreading sessions.
 
 #### Credits
 This script is heavily based on the POC found on exploit-db https://www.exploit-db.com/exploits/45210/
